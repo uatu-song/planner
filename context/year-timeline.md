@@ -56,8 +56,13 @@ Unit 6 ran out of time last year. The back end is now hard-fenced; treat these a
 2. **DC trip week (May 25-29, Wk 32) is non-instructional.** Memorial Day takes Monday; travel and chaperoning take the rest. Plan zero new content and no assessments.
 3. **Catch-up / flex week (June 1-5, Wk 33) is reserve, not content.** It is the single designated buffer for slippage from state testing and earlier units. Leave it unplanned on purpose: if U6 is on track, use it for reteach / SBG retakes; if not, it finishes U6.
 4. **Finals week (June 8-12, Wk 34): review and final assessments only.**
+5. **Zero grading backlog into the trip (hard deadline Fri May 22).** Everything assigned through Wk 31 is graded and entered before May 25. You may be chaperoning (no grading on the road), and the students are on the trip that week regardless of who attends, so the gradebook must be clean walking in. Structure any Wk 30-31 summative to be gradable by May 22, not after.
 
 Consequence: ~31 usable content weeks, not 34. To keep U6 whole, the lost time must come from an earlier unit, not from U6. Gen Ed U6 (Midsummer) is the tightest squeeze; if U5 Animal Farm runs to its old Wk 29 end, U6 collapses to two weeks. Either end U5 by Wk 28 or trim a longer earlier unit (Chew On This at 8 weeks, or Chains) to buy U6 a real three-week run.
+
+**Open decision — where do final assessments go?** Two options, because grading must be clean before the trip:
+- **A. Summative by May 22, June for closeout.** Give the U6 / end-of-year summative in Wk 31, grade it before the trip; Wks 33-34 become SBG retakes, reflection, and wrap-up (retakes just raise the existing score, near-zero new grading). Fits "all grading done before the trip" literally.
+- **B. Keep finals in Wk 34 (June 8-12).** Only the final is graded after the trip; everything else is clean by May 22. Lighter restructure, but you grade finals in the last week with students back.
 
 ## Seams to watch
 
