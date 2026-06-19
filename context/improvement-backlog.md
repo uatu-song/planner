@@ -32,6 +32,9 @@ One template, hardcoded to an 11-question / 1-CR layout; each new assessment mea
 ### 5. Manual weekly data routine
 The planning guide's "export every tool's data into MT evidence folders each week" is entirely manual across Pear Deck, Blooket, NoRedInk, Lexia, and PSAT. **Direction:** see Opportunity 2.
 
+### 6. Accommodation logs
+Tracking that accommodations (IEP / 504 / MI-Access) were actually provided per assessment and assignment is manual and compliance-sensitive; an audit wants evidence of delivery, not just a plan on file. The repo has a blank `_TEMPLATE_student_accommodations.md` but no system for logging delivery over time. **Direction:** need a real (de-identified) sample log first to see the actual fields and cadence; then a lightweight log tied to the SBG app's `students` tab (`mi_access` already planned) or a private Sheet. Captured as a Future to-do input below.
+
 ## Repo / tooling improvements
 
 - **Two overlapping gradebook tools, no canonical one.** "Complete Processor" vs. "Ultimate Processor" are two iterations of one job. Pick the survivor, archive the other.
@@ -47,3 +50,10 @@ The planning guide's "export every tool's data into MT evidence folders each wee
 4. **Collapse the gradebook tools to one** and fold it into the SBG app's import path.
 5. **Year-start stamp script** that reads `private/deployment-ids.md`, stamps `{{SCHOOL_YEAR}}` and non-secret tokens, leaves secrets in `private/`.
 6. **Add a CLAUDE.md** (`/init`) so conventions auto-load every session.
+
+## Future to-do (inputs needed to unblock)
+
+These need source material from the teacher before a system can be designed. Drop files in `private/` (gitignored).
+
+- [ ] **Upload a sample accommodation log** (de-identified) so we can see the real fields, cadence, and audit expectations, then plan a system to address accommodation tracking expediently. Relates to choke point 6 and `../templates/_TEMPLATE_student_accommodations.md`. Note: real logs are PII; `*_accommodations.md` and `private/` are already gitignored, but redact the sample anyway.
+- [ ] **Scan and upload the individual month event calendars** for the school year. `year-timeline.md` is built from the planning-guide's date list; per-month calendars give a more granular, authoritative picture (early releases, half-days, PD days, assemblies, testing sub-windows) that the high-level calendar misses. Once uploaded, reconcile `year-timeline.md` against them.
