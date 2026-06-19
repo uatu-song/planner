@@ -1,0 +1,20 @@
+# --- Student PII / confidential — NEVER commit ---
+private/*
+!private/.gitkeep
+*_accommodations.md
+*_integrity_log.md
+!templates/_TEMPLATE_*.md
+*roster*
+*grades*.csv
+*.local.*
+
+# --- Generated / scratch ---
+outputs/
+*.tmp
+__pycache__/
+*.pyc
+.DS_Store
+
+# --- Filled bubble sheets (may contain student names) ---
+*_filled.pdf
+filled_*.pdf
