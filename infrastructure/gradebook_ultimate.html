@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NHA Gradebook Ultimate Processor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface2: #242834;
+            --border: #2e3345;
+            --text: #e4e7ef;
+            --text-dim: #8b90a5;
+            --accent: #5b8af5;
+            --accent-glow: rgba(91, 138, 245, 0.15);
+            --green: #4ade80;
+            --green-dim: rgba(74, 222, 128, 0.12);
+            --yellow: #facc15;
+            --yellow-dim: rgba(250, 204, 21, 0.12);
+            --red: #f87171;
+            --red-dim: rgba(248, 113, 113, 0.12);
+            --radius: 10px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            padding: 40px 0 32px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 32px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+        .header h1 span { color: var(--accent); }
+        .header p {
+            color: var(--text-dim);
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        /* Pipeline visualization */
+        .pipeline {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+            padding: 20px 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+        }
+        .pipe-step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-dim);
+            white-space: nowrap;
+        }
+        .pipe-step.active { color: var(--accent); }
+        .pipe-step.done { color: var(--green); }
+        .pipe-step .num {
+            width: 24px; height: 24px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+        }
+        .pipe-step.active .num { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .pipe-step.done .num { background: var(--green); color: #000; border-color: var(--green); }
+        .pipe-arrow { color: var(--border); font-size: 16px; flex-shrink: 0; }
+
+        /* (paste zone styles below) */
+
+        /* Settings row */
+        .settings-row {
+            display: none;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding: 20px 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            align-items: end;
+        }
+        .settings-row.visible { display: flex; }
+        .field { flex: 1; }
+        .field label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .field input, .field select {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+        }
+        .field input:focus, .field select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 6px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn-primary:hover { filter: brightness(1.1); }
+        .btn-primary:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            filter: none;
+        }
+        .btn-success {
+            background: var(--green);
+            color: #000;
+            font-size: 15px;
+            padding: 14px 32px;
+        }
+        .btn-success:hover { filter: brightness(1.1); }
+
+        /* Log area */
+        .log {
+            display: none;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            max-height: 220px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+        .log.visible { display: block; }
+        .log-line { color: var(--text-dim); }
+        .log-line.ok { color: var(--green); }
+        .log-line.warn { color: var(--yellow); }
+        .log-line.err { color: var(--red); }
+        .log-line.info { color: var(--accent); }
+
+        /* Results dashboard */
+        .results {
+            display: none;
+            margin-bottom: 32px;
+        }
+        .results.visible { display: block; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-card .val {
+            font-size: 28px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .stat-card .lbl {
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .stat-card.green .val { color: var(--green); }
+        .stat-card.yellow .val { color: var(--yellow); }
+        .stat-card.red .val { color: var(--red); }
+        .stat-card.blue .val { color: var(--accent); }
+
+        /* Download section */
+        .download-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            text-align: center;
+        }
+        .download-section h3 {
+            font-size: 16px;
+            margin-bottom: 6px;
+        }
+        .download-section p {
+            color: var(--text-dim);
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        /* Preview table */
+        .preview-section {
+            display: none;
+            margin-bottom: 24px;
+        }
+        .preview-section.visible { display: block; }
+        .preview-section h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .table-wrap {
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        th {
+            background: var(--surface2);
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 11px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+            border-bottom: 1px solid var(--border);
+        }
+        td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: var(--surface2); }
+
+        td.score-high { background: var(--green-dim); color: var(--green); }
+        td.score-mid { background: var(--yellow-dim); color: var(--yellow); }
+        td.score-low { background: var(--red-dim); color: var(--red); }
+        td.star { font-weight: 700; }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 16px;
+            font-size: 12px;
+            color: var(--text-dim);
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .legend-dot {
+            width: 10px; height: 10px;
+            border-radius: 3px;
+        }
+
+        @media (max-width: 700px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .pipeline { flex-wrap: wrap; }
+        }
+
+        /* Paste zone */
+        .paste-zone {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+        .paste-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 20px 24px 12px;
+        }
+        .paste-header .paste-icon { font-size: 28px; }
+        .paste-header h3 { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+        .paste-header p { font-size: 12px; color: var(--text-dim); }
+        .paste-zone textarea {
+            width: 100%;
+            min-height: 180px;
+            max-height: 400px;
+            padding: 16px 24px;
+            background: var(--surface2);
+            border: none;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            resize: vertical;
+        }
+        .paste-zone textarea:focus {
+            outline: none;
+            background: #1e2233;
+        }
+        .paste-zone textarea::placeholder {
+            color: var(--text-dim);
+            opacity: 0.5;
+        }
+        .paste-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 24px;
+        }
+        .char-count {
+            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-dim);
+        }
+        .char-count.has-data { color: var(--green); }
+        .btn-clear {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 4px 14px;
+            border-radius: 4px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-clear:hover { border-color: var(--red); color: var(--red); }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>NHA Gradebook <span>Ultimate</span></h1>
+        <p>Paste your gradebook data → get a fully analyzed, color-coded Excel file. No CSV export, no Sheets, no Apps Script.</p>
+    </div>
+
+    <!-- Pipeline steps -->
+    <div class="pipeline" id="pipeline">
+        <div class="pipe-step active" id="ps1"><span class="num">1</span> Paste Data</div>
+        <span class="pipe-arrow">→</span>
+        <div class="pipe-step" id="ps2"><span class="num">2</span> Detect Format</div>
+        <span class="pipe-arrow">→</span>
+        <div class="pipe-step" id="ps3"><span class="num">3</span> Parse & Clean</div>
+        <span class="pipe-arrow">→</span>
+        <div class="pipe-step" id="ps4"><span class="num">4</span> Standards Analysis</div>
+        <span class="pipe-arrow">→</span>
+        <div class="pipe-step" id="ps5"><span class="num">5</span> Export Excel</div>
+    </div>
+
+    <!-- Paste zone -->
+    <div class="paste-zone" id="pasteZone">
+        <div class="paste-header">
+            <div class="paste-icon">📋</div>
+            <div>
+                <h3>Paste your gradebook data</h3>
+                <p>Copy directly from the NHA gradebook or paste a cleaned CSV — auto-detected</p>
+            </div>
+        </div>
+        <textarea id="pasteArea" placeholder="Paste your NHA gradebook content here...&#10;&#10;Accepts:&#10;  • Raw copy-paste from the NHA gradebook page&#10;  • Already-cleaned CSV content&#10;  • Multi-page NHA exports"></textarea>
+        <div class="paste-footer">
+            <span class="char-count" id="charCount">0 characters</span>
+            <button class="btn-clear" id="clearBtn" onclick="clearPaste()">Clear</button>
+        </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="settings-row" id="settingsRow">
+        <div class="field">
+            <label>Class Name</label>
+            <input type="text" id="className" value="ELA1" placeholder="ELA1, ELA2, ELA3...">
+        </div>
+        <div class="field" style="flex: 0 0 auto;">
+            <label>&nbsp;</label>
+            <button class="btn btn-primary" id="processBtn" onclick="runPipeline()">Process & Analyze</button>
+        </div>
+    </div>
+
+    <!-- Log -->
+    <div class="log" id="log"></div>
+
+    <!-- Results -->
+    <div class="results" id="results">
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <!-- Mastery preview -->
+        <div class="preview-section" id="masteryPreview">
+            <h3>Mastery Summary Preview</h3>
+            <div class="legend">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> Proficient (≥3.5)</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div> Approaching (2.5–3.4)</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Needs Support (&lt;2.5)</div>
+                <div class="legend-item">⭐ First max score</div>
+                <div class="legend-item">✅ Already mastered</div>
+            </div>
+            <div class="table-wrap" id="masteryTable"></div>
+        </div>
+
+        <!-- Class Analysis preview -->
+        <div class="preview-section" id="analysisPreview">
+            <h3>Class Standards Analysis — Ranked by Need</h3>
+            <div class="legend">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> 🔴 Critical (≥70% below prof)</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div> 🟡 Monitor (40–69%)</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#5b8af5"></div> 🔵 Watch (20–39%)</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> ✅ On Track (&lt;20%)</div>
+            </div>
+            <div class="table-wrap" id="analysisTable"></div>
+        </div>
+
+        <!-- Download -->
+        <div class="download-section">
+            <h3>Your file is ready</h3>
+            <p>Fully formatted Excel with 3 sheets: Gradebook, Mastery Tracking, and Class Standards Analysis.</p>
+            <button class="btn btn-success" id="downloadBtn" onclick="downloadExcel()">⬇ Download Excel</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────
+let rawCSV = '';
+let gradebookData = null;  // {headers, rows}
+let analysisResult = null; // {markedRows, masteryHeaders, masteryRows, stats}
+let className = 'ELA1';
+
+// ─── UI HELPERS ──────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+
+function setStep(n) {
+    for (let i = 1; i <= 5; i++) {
+        const el = $('ps' + i);
+        el.className = 'pipe-step' + (i < n ? ' done' : i === n ? ' active' : '');
+    }
+}
+
+function log(msg, type = '') {
+    const el = $('log');
+    el.classList.add('visible');
+    const line = document.createElement('div');
+    line.className = 'log-line' + (type ? ' ' + type : '');
+    line.textContent = msg;
+    el.appendChild(line);
+    el.scrollTop = el.scrollHeight;
+}
+
+// ─── PASTE AREA ──────────────────────────────────────────────────────
+const pasteArea = $('pasteArea');
+const charCount = $('charCount');
+
+pasteArea.addEventListener('input', () => {
+    const len = pasteArea.value.length;
+    charCount.textContent = len.toLocaleString() + ' characters';
+    charCount.className = 'char-count' + (len > 0 ? ' has-data' : '');
+
+    if (len > 10) {
+        rawCSV = pasteArea.value;
+        $('settingsRow').classList.add('visible');
+    }
+});
+
+function clearPaste() {
+    pasteArea.value = '';
+    rawCSV = '';
+    charCount.textContent = '0 characters';
+    charCount.className = 'char-count';
+    $('settingsRow').classList.remove('visible');
+}
+
+// ─── MAIN PIPELINE ──────────────────────────────────────────────────
+function runPipeline() {
+    className = $('className').value || 'ELA1';
+
+    if (!rawCSV || rawCSV.trim().length < 20) {
+        log('Paste your gradebook data first.', 'err');
+        return;
+    }
+
+    $('processBtn').disabled = true;
+    $('log').innerHTML = '';
+    $('results').classList.remove('visible');
+
+    setTimeout(() => {
+        try {
+            // Step 2: Detect format
+            setStep(2);
+            const format = detectFormat(rawCSV);
+            log(`Format detected: ${format}`, 'info');
+
+            // Step 3: Parse
+            setStep(3);
+            if (format === 'raw-multipage') {
+                gradebookData = parseMultiPageNHA(rawCSV);
+            } else if (format === 'raw-singlepage') {
+                gradebookData = parseSinglePageNHA(rawCSV);
+            } else {
+                gradebookData = parseCleanCSV(rawCSV);
+            }
+            log(`Parsed ${gradebookData.rows.length} students, ${gradebookData.headers.length} columns`, 'ok');
+
+            // Step 4: Standards Analysis
+            setStep(4);
+            analysisResult = runStandardsAnalysis(gradebookData);
+            log(`Analyzed ${analysisResult.stats.standards} standards`, 'ok');
+            log(`Override averages calculated for all students`, 'ok');
+
+            // Step 5: Ready for export
+            setStep(5);
+            log('Excel file ready to download', 'ok');
+
+            showResults();
+        } catch (err) {
+            log('ERROR: ' + err.message, 'err');
+            console.error(err);
+        }
+        $('processBtn').disabled = false;
+    }, 50);
+}
+
+// ─── FORMAT DETECTION ───────────────────────────────────────────────
+function detectFormat(csv) {
+    const firstLine = csv.split('\n')[0];
+
+    // Raw NHA: first meaningful items are "Students", assignment names, etc.
+    // Multi-page raw: multiple "Students" in first line
+    const studentsCount = (firstLine.match(/Students/gi) || []).length;
+    if (studentsCount > 1) {
+        log(`Detected multi-page raw NHA export (${studentsCount} pages)`, 'info');
+        return 'raw-multipage';
+    }
+    if (studentsCount === 1) {
+        log('Detected single-page raw NHA export', 'info');
+        return 'raw-singlepage';
+    }
+
+    // Clean CSV: first header is "Student" (not "Students")
+    if (firstLine.startsWith('Student,') || firstLine.startsWith('"Student"')) {
+        log('Detected already-cleaned CSV', 'info');
+        return 'clean';
+    }
+
+    // Fallback: try clean
+    log('Format unclear, treating as cleaned CSV', 'warn');
+    return 'clean';
+}
+
+// ─── PARSE CLEAN CSV ────────────────────────────────────────────────
+function parseCleanCSV(csv) {
+    const lines = csv.split(/\r?\n/).filter(l => l.trim());
+    const headers = parseCSVLine(lines[0]);
+    const rows = [];
+    for (let i = 1; i < lines.length; i++) {
+        const parsed = parseCSVLine(lines[i]);
+        if (parsed[0] && parsed[0].trim()) rows.push(parsed);
+    }
+    log(`Clean CSV: ${rows.length} students, ${headers.length} columns`);
+    return { headers, rows };
+}
+
+// ─── PARSE RAW NHA (single page) ───────────────────────────────────
+function parseSinglePageNHA(csv) {
+    const lines = csv.split(/\r?\n/).map(l => l.trim().replace(/^"|"$/g, ''));
+    return parsePage(lines);
+}
+
+// ─── PARSE RAW NHA (multi page) ────────────────────────────────────
+function parseMultiPageNHA(csv) {
+    const allLines = csv.split(/\r?\n/);
+    const firstLine = allLines[0];
+    const numPages = (firstLine.match(/Students/gi) || []).length;
+
+    const pages = [];
+    for (let p = 0; p < numPages; p++) {
+        const pageLines = [];
+        allLines.forEach(line => {
+            const cells = parseCSVLine(line);
+            if (cells[p]) pageLines.push(cells[p].trim().replace(/^"|"$/g, ''));
+        });
+        if (pageLines.length > 0 && pageLines[0]) pages.push(pageLines);
+    }
+
+    const result = parsePage(pages[0]);
+    for (let p = 1; p < pages.length; p++) {
+        const pageData = parsePage(pages[p]);
+        for (let h = 3; h < pageData.headers.length; h++) result.headers.push(pageData.headers[h]);
+        result.rows.forEach((row, idx) => {
+            if (idx < pageData.rows.length) {
+                for (let c = 3; c < pageData.rows[idx].length; c++) row.push(pageData.rows[idx][c]);
+            }
+        });
+    }
+    return result;
+}
+
+function parsePage(lines) {
+    const statusMarkers = new Set(['U', 'X', 'I', 'M']);
+    const headers = ['Student', 'Overall Score', 'Override'];
+    let i = 5;
+    let assignmentCount = 0;
+
+    while (i < lines.length && lines[i] !== 'avatar') {
+        if (i + 1 < lines.length && lines[i + 1].includes('/')) {
+            const name = lines[i];
+            const date = lines[i + 1];
+            i += 2;
+            while (i + 1 < lines.length && lines[i + 1] === 'info') {
+                headers.push(`${name} (${date}) - ${lines[i]}`);
+                i += 2;
+            }
+            assignmentCount++;
+        } else { i++; }
+    }
+
+    const students = [];
+    for (let j = 0; j < lines.length - 1; j++) {
+        if (lines[j] === 'avatar') students.push({ index: j + 1, name: lines[j + 1] });
+    }
+
+    const rows = [];
+    students.forEach((stu, idx) => {
+        const startIdx = stu.index + 1;
+        const endIdx = idx < students.length - 1 ? students[idx + 1].index - 1 : lines.length;
+        const rawVals = [];
+        for (let k = startIdx; k < endIdx; k++) rawVals.push(lines[k]);
+
+        const overall = rawVals[0] || '';
+        const remaining = rawVals.slice(1);
+        const merged = [];
+        let m = 0;
+        while (m < remaining.length) {
+            if (m + 1 < remaining.length && statusMarkers.has(remaining[m + 1])) {
+                merged.push(remaining[m] + remaining[m + 1]);
+                m += 2;
+            } else { merged.push(remaining[m]); m++; }
+        }
+
+        let name = stu.name;
+        if (name.includes(',')) { const p = name.split(','); name = `${p[1].trim()} ${p[0].trim()}`; }
+
+        const row = [name, overall, ''];
+        row.push(...merged);
+        while (row.length < headers.length) row.push('');
+        rows.push(row.slice(0, headers.length));
+    });
+
+    return { headers, rows };
+}
+
+function parseCSVLine(line) {
+    const result = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === '"') inQ = !inQ;
+        else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
+        else cur += c;
+    }
+    result.push(cur);
+    return result;
+}
+
+// ─── STRIP STATUS MARKER ───────────────────────────────────────────
+function stripStatus(val) {
+    if (val === null || val === undefined || val === '' || val === 'N/A' || String(val).startsWith('N/A')) return null;
+    const m = String(val).match(/[\d.]+/);
+    if (m) { const n = parseFloat(m[0]); return isNaN(n) ? null : n; }
+    return null;
+}
+
+// ─── EXTRACT STANDARD FROM HEADER ───────────────────────────────────
+function extractStandard(header) {
+    if (!header) return null;
+    // Try ENG format first
+    let m = header.match(/\b(ENG\d+\.\d+\.\d+\.\d+[a-z]?)\b/i);
+    if (m) return m[1].toUpperCase();
+    // Common Core format
+    m = header.match(/\b([A-Z]{1,2}\.\d+\.?\d*[a-z]?)\b/);
+    return m ? m[1] : null;
+}
+
+// ─── EXTRACT DATE FROM HEADER ───────────────────────────────────────
+function extractDate(header) {
+    const m = header.match(/\((\d+\/\d+\/\d+)\)/);
+    return m ? new Date(m[1]) : new Date(0);
+}
+
+// ─── STANDARDS ANALYSIS ─────────────────────────────────────────────
+function runStandardsAnalysis(data) {
+    const { headers, rows } = data;
+
+    // Build standard → columns map
+    const standardMap = {};
+    for (let col = 3; col < headers.length; col++) {
+        const std = extractStandard(headers[col]);
+        if (std) {
+            if (!standardMap[std]) standardMap[std] = [];
+            standardMap[std].push({ colIdx: col, header: headers[col], date: extractDate(headers[col]) });
+        }
+    }
+
+    const uniqueStandards = Object.keys(standardMap).sort();
+    log(`Found ${uniqueStandards.length} unique standards: ${uniqueStandards.join(', ')}`);
+
+    // Analysis results per student
+    // markedRows: same structure as rows but with ⭐/✅ appended
+    // masteryRows: [studentName, maxForStd1, maxForStd2, ..., overrideAvg]
+
+    const markedRows = rows.map(r => [...r]); // deep copy
+    const masteryHeaders = ['Student', ...uniqueStandards.map(s => `${s} (Max)`), 'Override Avg'];
+    const masteryRows = [];
+
+    let totalStars = 0, totalChecks = 0;
+
+    rows.forEach((row, rowIdx) => {
+        const studentName = row[0];
+        const masteryRow = [studentName];
+        const maxScores = []; // for override avg
+
+        uniqueStandards.forEach(standard => {
+            const columns = standardMap[standard];
+            const scores = [];
+
+            columns.forEach(colInfo => {
+                const val = row[colInfo.colIdx];
+                const num = stripStatus(val);
+                if (num !== null) {
+                    scores.push({
+                        score: num,
+                        colIdx: colInfo.colIdx,
+                        date: colInfo.date,
+                        original: val
+                    });
+                }
+            });
+
+            if (scores.length > 0) {
+                const maxScore = Math.max(...scores.map(s => s.score));
+                maxScores.push(maxScore);
+
+                // Find all instances of the max score
+                const maxEntries = scores.filter(s => s.score === maxScore);
+
+                // Sort by date ascending (earliest first)
+                maxEntries.sort((a, b) => a.date - b.date);
+
+                // ⭐ goes on the FIRST (earliest) instance of the max
+                const firstMax = maxEntries[0];
+                let cellVal = String(markedRows[rowIdx][firstMax.colIdx]);
+                if (!cellVal.includes('⭐') && !cellVal.includes('✅')) {
+                    markedRows[rowIdx][firstMax.colIdx] = cellVal + ' ⭐';
+                    totalStars++;
+                }
+
+                // ✅ goes on ALL subsequent instances of the max
+                for (let k = 1; k < maxEntries.length; k++) {
+                    let laterVal = String(markedRows[rowIdx][maxEntries[k].colIdx]);
+                    if (!laterVal.includes('⭐') && !laterVal.includes('✅')) {
+                        markedRows[rowIdx][maxEntries[k].colIdx] = laterVal + ' ✅';
+                        totalChecks++;
+                    }
+                }
+
+                masteryRow.push(maxScore);
+            } else {
+                masteryRow.push('');
+            }
+        });
+
+        // Calculate override avg: mean of all max scores
+        const validMaxes = maxScores.filter(s => typeof s === 'number');
+        const overrideAvg = validMaxes.length > 0
+            ? Math.round((validMaxes.reduce((a, b) => a + b, 0) / validMaxes.length) * 100) / 100
+            : '';
+
+        masteryRow.push(overrideAvg);
+
+        // Write override into column C (index 2) of markedRows
+        markedRows[rowIdx][2] = overrideAvg;
+
+        masteryRows.push(masteryRow);
+    });
+
+    log(`Placed ${totalStars} ⭐ (first max) and ${totalChecks} ✅ (already mastered)`);
+
+    // Compute class-level stats
+    let profCount = 0, approachCount = 0, needsCount = 0;
+    masteryRows.forEach(r => {
+        for (let i = 1; i < r.length - 1; i++) { // skip name and override
+            const v = r[i];
+            if (v === '') continue;
+            if (v >= 3.5) profCount++;
+            else if (v >= 2.5) approachCount++;
+            else needsCount++;
+        }
+    });
+    const totalScored = profCount + approachCount + needsCount;
+
+    // ── Class Analysis: per-standard breakdown ──
+    const classAnalysis = [];
+    uniqueStandards.forEach((std, stdIdx) => {
+        const colInMastery = stdIdx + 1; // offset by student name col
+        let sum = 0, count = 0, atFour = 0, belowProf = 0;
+        const studentBreakdown = []; // for per-student detail
+
+        masteryRows.forEach(r => {
+            const v = r[colInMastery];
+            if (v === '' || v === undefined) return;
+            const n = parseFloat(v);
+            if (isNaN(n)) return;
+            sum += n;
+            count++;
+            if (n === 4) atFour++;
+            if (n < 3.5) belowProf++;
+            if (n < 3.5) studentBreakdown.push({ name: r[0], score: n });
+        });
+
+        const avg = count > 0 ? Math.round((sum / count) * 100) / 100 : 0;
+        const pctBelow = count > 0 ? Math.round(belowProf / count * 100) : 0;
+        const pctMastered = count > 0 ? Math.round(atFour / count * 100) : 0;
+
+        // Determine priority
+        let priority = '✅ On Track';
+        if (pctBelow >= 70) priority = '🔴 Critical — Reteach & Reassess';
+        else if (pctBelow >= 40) priority = '🟡 Monitor — Consider Reassessment';
+        else if (pctBelow >= 20) priority = '🔵 Watch';
+
+        classAnalysis.push({
+            standard: std,
+            avg,
+            atFour,
+            belowProf,
+            total: count,
+            pctBelow,
+            pctMastered,
+            priority,
+            studentsBelow: studentBreakdown.sort((a, b) => a.score - b.score)
+        });
+    });
+
+    // Sort by average ascending (weakest first)
+    classAnalysis.sort((a, b) => a.avg - b.avg);
+
+    log(`Class analysis complete — top need: ${classAnalysis[0]?.standard} (avg ${classAnalysis[0]?.avg})`, 'info');
+
+    return {
+        markedHeaders: headers,
+        markedRows,
+        masteryHeaders,
+        masteryRows,
+        classAnalysis,
+        stats: {
+            students: rows.length,
+            standards: uniqueStandards.length,
+            stars: totalStars,
+            checks: totalChecks,
+            profPct: totalScored ? Math.round(profCount / totalScored * 100) : 0,
+            approachPct: totalScored ? Math.round(approachCount / totalScored * 100) : 0,
+            needsPct: totalScored ? Math.round(needsCount / totalScored * 100) : 0
+        }
+    };
+}
+
+// ─── SHOW RESULTS ───────────────────────────────────────────────────
+function showResults() {
+    const s = analysisResult.stats;
+
+    $('statsGrid').innerHTML = `
+        <div class="stat-card blue"><div class="val">${s.students}</div><div class="lbl">Students</div></div>
+        <div class="stat-card blue"><div class="val">${s.standards}</div><div class="lbl">Standards</div></div>
+        <div class="stat-card green"><div class="val">${s.profPct}%</div><div class="lbl">Proficient</div></div>
+        <div class="stat-card yellow"><div class="val">${s.approachPct}%</div><div class="lbl">Approaching</div></div>
+    `;
+
+    // Build mastery preview table
+    const mr = analysisResult.masteryRows;
+    const mh = analysisResult.masteryHeaders;
+
+    let html = '<table><thead><tr>';
+    mh.forEach(h => { html += `<th>${h}</th>`; });
+    html += '</tr></thead><tbody>';
+
+    mr.forEach(row => {
+        html += '<tr>';
+        row.forEach((cell, ci) => {
+            let cls = '';
+            if (ci > 0 && cell !== '') {
+                const v = parseFloat(cell);
+                if (!isNaN(v)) {
+                    if (v >= 3.5) cls = 'score-high';
+                    else if (v >= 2.5) cls = 'score-mid';
+                    else cls = 'score-low';
+                }
+            }
+            html += `<td class="${cls}">${cell}</td>`;
+        });
+        html += '</tr>';
+    });
+    html += '</tbody></table>';
+    $('masteryTable').innerHTML = html;
+
+    $('results').classList.add('visible');
+    $('masteryPreview').classList.add('visible');
+
+    // Build class analysis preview table
+    const ca = analysisResult.classAnalysis;
+    let ahtml = '<table><thead><tr>';
+    ahtml += '<th>Rank</th><th>Standard</th><th>Class Avg</th><th>% Below Prof</th><th>% Mastered (4.0)</th><th># Below / Total</th><th>Priority</th><th>Students Below Proficient</th>';
+    ahtml += '</tr></thead><tbody>';
+
+    ca.forEach((row, idx) => {
+        const avgCls = row.avg >= 3.5 ? 'score-high' : row.avg >= 2.5 ? 'score-mid' : 'score-low';
+        const pctCls = row.pctBelow >= 70 ? 'score-low' : row.pctBelow >= 40 ? 'score-mid' : row.pctBelow >= 20 ? '' : 'score-high';
+        const studentList = row.studentsBelow.map(s => `${s.name} (${s.score})`).join(', ') || '—';
+        ahtml += `<tr>`;
+        ahtml += `<td style="text-align:center;font-weight:600">${idx + 1}</td>`;
+        ahtml += `<td style="font-weight:600">${row.standard}</td>`;
+        ahtml += `<td class="${avgCls}" style="text-align:center">${row.avg}</td>`;
+        ahtml += `<td class="${pctCls}" style="text-align:center">${row.pctBelow}%</td>`;
+        ahtml += `<td style="text-align:center">${row.pctMastered}%</td>`;
+        ahtml += `<td style="text-align:center">${row.belowProf} / ${row.total}</td>`;
+        ahtml += `<td>${row.priority}</td>`;
+        ahtml += `<td style="font-size:11px;max-width:300px;overflow:hidden;text-overflow:ellipsis">${studentList}</td>`;
+        ahtml += `</tr>`;
+    });
+    ahtml += '</tbody></table>';
+    $('analysisTable').innerHTML = ahtml;
+    $('analysisPreview').classList.add('visible');
+}
+
+// ─── EXCEL EXPORT ───────────────────────────────────────────────────
+function downloadExcel() {
+    const wb = XLSX.utils.book_new();
+
+    // ── Sheet 1: Full Gradebook ──
+    const gbData = [analysisResult.markedHeaders, ...analysisResult.markedRows];
+    const ws1 = XLSX.utils.aoa_to_sheet(gbData);
+
+    // Column widths
+    const gbCols = analysisResult.markedHeaders.map((h, i) => {
+        if (i === 0) return { wch: 22 };
+        if (i <= 2) return { wch: 14 };
+        return { wch: 10 };
+    });
+    ws1['!cols'] = gbCols;
+
+    // Color-code cells in the gradebook
+    const gbRows = analysisResult.markedRows;
+    for (let r = 0; r < gbRows.length; r++) {
+        for (let c = 3; c < gbRows[r].length; c++) {
+            const cellRef = XLSX.utils.encode_cell({ r: r + 1, c: c });
+            const cell = ws1[cellRef];
+            if (!cell) continue;
+
+            const strVal = String(cell.v);
+            const num = stripStatus(strVal);
+
+            if (num !== null) {
+                let bgColor = 'FFFFFF';
+                let fontColor = '000000';
+
+                if (num >= 3.5) { bgColor = 'D9EAD3'; fontColor = '2E7D32'; }
+                else if (num >= 2.5) { bgColor = 'FFF2CC'; fontColor = '7C6800'; }
+                else if (num > 0) { bgColor = 'F4CCCC'; fontColor = 'C62828'; }
+
+                const isStar = strVal.includes('⭐');
+                const isCheck = strVal.includes('✅');
+
+                cell.s = {
+                    fill: { fgColor: { rgb: bgColor } },
+                    font: {
+                        color: { rgb: fontColor },
+                        bold: isStar || isCheck,
+                        sz: 10
+                    },
+                    alignment: { horizontal: 'center' }
+                };
+
+                // Add border for star cells
+                if (isStar) {
+                    cell.s.border = {
+                        top: { style: 'medium', color: { rgb: '0066CC' } },
+                        bottom: { style: 'medium', color: { rgb: '0066CC' } },
+                        left: { style: 'medium', color: { rgb: '0066CC' } },
+                        right: { style: 'medium', color: { rgb: '0066CC' } }
+                    };
+                } else if (isCheck) {
+                    cell.s.border = {
+                        top: { style: 'thin', color: { rgb: '4CAF50' } },
+                        bottom: { style: 'thin', color: { rgb: '4CAF50' } },
+                        left: { style: 'thin', color: { rgb: '4CAF50' } },
+                        right: { style: 'thin', color: { rgb: '4CAF50' } }
+                    };
+                }
+            }
+        }
+
+        // Style Override column (col 2)
+        const overrideRef = XLSX.utils.encode_cell({ r: r + 1, c: 2 });
+        const overrideCell = ws1[overrideRef];
+        if (overrideCell && overrideCell.v !== '' && overrideCell.v !== undefined) {
+            const v = parseFloat(overrideCell.v);
+            let bg = 'FFFFFF', fc = '000000';
+            if (!isNaN(v)) {
+                if (v >= 3.5) { bg = 'D9EAD3'; fc = '2E7D32'; }
+                else if (v >= 2.5) { bg = 'FFF2CC'; fc = '7C6800'; }
+                else { bg = 'F4CCCC'; fc = 'C62828'; }
+            }
+            overrideCell.s = {
+                fill: { fgColor: { rgb: bg } },
+                font: { color: { rgb: fc }, bold: true, sz: 11 },
+                alignment: { horizontal: 'center' },
+                numFmt: '0.00'
+            };
+        }
+    }
+
+    // Header row styling
+    for (let c = 0; c < analysisResult.markedHeaders.length; c++) {
+        const ref = XLSX.utils.encode_cell({ r: 0, c: c });
+        if (ws1[ref]) {
+            ws1[ref].s = {
+                fill: { fgColor: { rgb: '4A86E8' } },
+                font: { color: { rgb: 'FFFFFF' }, bold: true, sz: 10 },
+                alignment: { horizontal: 'center', wrapText: true }
+            };
+        }
+    }
+
+    ws1['!freeze'] = { xSplit: 1, ySplit: 1 };
+
+    XLSX.utils.book_append_sheet(wb, ws1, className + ' Gradebook');
+
+    // ── Sheet 2: Mastery Summary ──
+    const msData = [analysisResult.masteryHeaders, ...analysisResult.masteryRows];
+    const ws2 = XLSX.utils.aoa_to_sheet(msData);
+
+    const msCols = analysisResult.masteryHeaders.map((h, i) => {
+        if (i === 0) return { wch: 22 };
+        return { wch: 14 };
+    });
+    ws2['!cols'] = msCols;
+
+    // Color-code mastery cells
+    for (let r = 0; r < analysisResult.masteryRows.length; r++) {
+        for (let c = 1; c < analysisResult.masteryRows[r].length; c++) {
+            const ref = XLSX.utils.encode_cell({ r: r + 1, c: c });
+            const cell = ws2[ref];
+            if (!cell || cell.v === '') continue;
+
+            const v = parseFloat(cell.v);
+            if (isNaN(v)) continue;
+
+            let bg = 'FFFFFF', fc = '000000';
+            if (v >= 3.5) { bg = 'D9EAD3'; fc = '2E7D32'; }
+            else if (v >= 2.5) { bg = 'FFF2CC'; fc = '7C6800'; }
+            else { bg = 'F4CCCC'; fc = 'C62828'; }
+
+            const isMastery = (v === 4);
+            cell.s = {
+                fill: { fgColor: { rgb: bg } },
+                font: { color: { rgb: fc }, bold: isMastery, sz: 10 },
+                alignment: { horizontal: 'center' },
+                numFmt: '0.0'
+            };
+        }
+    }
+
+    // Mastery header styling
+    for (let c = 0; c < analysisResult.masteryHeaders.length; c++) {
+        const ref = XLSX.utils.encode_cell({ r: 0, c: c });
+        if (ws2[ref]) {
+            ws2[ref].s = {
+                fill: { fgColor: { rgb: '4A86E8' } },
+                font: { color: { rgb: 'FFFFFF' }, bold: true, sz: 10 },
+                alignment: { horizontal: 'center', wrapText: true }
+            };
+        }
+    }
+
+    ws2['!freeze'] = { xSplit: 1, ySplit: 1 };
+
+    XLSX.utils.book_append_sheet(wb, ws2, className + ' Mastery');
+
+    // ── Sheet 3: Class Standards Analysis ──
+    const ca = analysisResult.classAnalysis;
+    const caHeaders = ['Rank', 'Standard', 'Class Avg', '% Below Proficient', '% Mastered (4.0)', '# Below Prof', '# Students', 'Priority', 'Students Below Proficient'];
+    const caRows = ca.map((row, idx) => [
+        idx + 1,
+        row.standard,
+        row.avg,
+        row.pctBelow,
+        row.pctMastered,
+        row.belowProf,
+        row.total,
+        row.priority,
+        row.studentsBelow.map(s => `${s.name} (${s.score})`).join(', ') || '—'
+    ]);
+    const caData = [caHeaders, ...caRows];
+    const ws3 = XLSX.utils.aoa_to_sheet(caData);
+
+    ws3['!cols'] = [
+        { wch: 6 },   // Rank
+        { wch: 12 },  // Standard
+        { wch: 11 },  // Class Avg
+        { wch: 16 },  // % Below
+        { wch: 16 },  // % Mastered
+        { wch: 12 },  // # Below
+        { wch: 11 },  // # Students
+        { wch: 32 },  // Priority
+        { wch: 60 }   // Students list
+    ];
+
+    // Header styling
+    for (let c = 0; c < caHeaders.length; c++) {
+        const ref = XLSX.utils.encode_cell({ r: 0, c: c });
+        if (ws3[ref]) {
+            ws3[ref].s = {
+                fill: { fgColor: { rgb: '4A86E8' } },
+                font: { color: { rgb: 'FFFFFF' }, bold: true, sz: 10 },
+                alignment: { horizontal: 'center', wrapText: true }
+            };
+        }
+    }
+
+    // Color-code data rows
+    for (let r = 0; r < caRows.length; r++) {
+        const row = caRows[r];
+        const avg = row[2];
+        const pctBelow = row[3];
+
+        // Class Avg cell (col 2)
+        const avgRef = XLSX.utils.encode_cell({ r: r + 1, c: 2 });
+        if (ws3[avgRef]) {
+            let bg = 'FFFFFF', fc = '000000';
+            if (avg >= 3.5) { bg = 'D9EAD3'; fc = '2E7D32'; }
+            else if (avg >= 2.5) { bg = 'FFF2CC'; fc = '7C6800'; }
+            else { bg = 'F4CCCC'; fc = 'C62828'; }
+            ws3[avgRef].s = {
+                fill: { fgColor: { rgb: bg } },
+                font: { color: { rgb: fc }, bold: true, sz: 11 },
+                alignment: { horizontal: 'center' },
+                numFmt: '0.00'
+            };
+        }
+
+        // % Below cell (col 3)
+        const pctRef = XLSX.utils.encode_cell({ r: r + 1, c: 3 });
+        if (ws3[pctRef]) {
+            let bg = 'FFFFFF', fc = '000000';
+            if (pctBelow >= 70) { bg = 'F4CCCC'; fc = 'C62828'; }
+            else if (pctBelow >= 40) { bg = 'FFF2CC'; fc = '7C6800'; }
+            else if (pctBelow >= 20) { bg = 'CFE2F3'; fc = '1155CC'; }
+            else { bg = 'D9EAD3'; fc = '2E7D32'; }
+            ws3[pctRef].s = {
+                fill: { fgColor: { rgb: bg } },
+                font: { color: { rgb: fc }, bold: true, sz: 10 },
+                alignment: { horizontal: 'center' }
+            };
+        }
+
+        // % Mastered cell (col 4)
+        const mastRef = XLSX.utils.encode_cell({ r: r + 1, c: 4 });
+        if (ws3[mastRef]) {
+            const pm = row[4];
+            let bg = 'FFFFFF', fc = '000000';
+            if (pm >= 80) { bg = 'D9EAD3'; fc = '2E7D32'; }
+            else if (pm >= 50) { bg = 'FFF2CC'; fc = '7C6800'; }
+            else { bg = 'F4CCCC'; fc = 'C62828'; }
+            ws3[mastRef].s = {
+                fill: { fgColor: { rgb: bg } },
+                font: { color: { rgb: fc }, sz: 10 },
+                alignment: { horizontal: 'center' }
+            };
+        }
+
+        // Priority cell (col 7) — highlight critical/monitor rows
+        const priRef = XLSX.utils.encode_cell({ r: r + 1, c: 7 });
+        if (ws3[priRef]) {
+            let bg = 'FFFFFF', fc = '000000';
+            if (pctBelow >= 70) { bg = 'F4CCCC'; fc = 'C62828'; }
+            else if (pctBelow >= 40) { bg = 'FFF2CC'; fc = '7C6800'; }
+            ws3[priRef].s = {
+                fill: { fgColor: { rgb: bg } },
+                font: { color: { rgb: fc }, bold: pctBelow >= 40, sz: 10 },
+                alignment: { horizontal: 'left' }
+            };
+        }
+
+        // Rank cell (col 0) — center
+        const rankRef = XLSX.utils.encode_cell({ r: r + 1, c: 0 });
+        if (ws3[rankRef]) {
+            ws3[rankRef].s = { alignment: { horizontal: 'center' }, font: { bold: true, sz: 10 } };
+        }
+
+        // Standard cell (col 1) — bold
+        const stdRef = XLSX.utils.encode_cell({ r: r + 1, c: 1 });
+        if (ws3[stdRef]) {
+            ws3[stdRef].s = { font: { bold: true, sz: 10 } };
+        }
+    }
+
+    ws3['!freeze'] = { xSplit: 0, ySplit: 1 };
+    XLSX.utils.book_append_sheet(wb, ws3, className + ' Class Analysis');
+
+    // ── Download ──
+    XLSX.writeFile(wb, `${className}_Gradebook_Analyzed.xlsx`);
+    log(`Downloaded ${className}_Gradebook_Analyzed.xlsx`, 'ok');
+}
+</script>
+</body>
+</html>
