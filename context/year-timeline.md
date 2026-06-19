@@ -24,10 +24,10 @@ Built from the assessment calendar and both unit progressions in `planning-guide
 | **Mar 30-Apr 3** | Spring Break | — | — |
 | **April 2026** | **PSAT 8/9** (target); state testing window opens | U5 Animal Farm | U6 Animal Farm begins (Wk 28+) |
 | **Apr - May 15** | State testing window | U5 Animal Farm wraps, then **U6 Midsummer** | **U6 Animal Farm** |
-| **May 18-22 (Wk 31)** | Last full new-content week | **U6 must finish here** | **U6 must finish here** |
+| **May 18-22 (Wk 31)** | Last full new-content week | **U6 taught + end-of-year summative given and graded by Fri May 22** | **U6 taught + summative given and graded by Fri May 22** |
 | **May 25-29 (Wk 32)** | **8th-grade DC trip** (Memorial Day Mon May 25); near-zero instruction | no new content | no new content |
-| **June 1-5 (Wk 33)** | **Catch-up / flex week** (designated; the last flex) | absorb slippage; close out U6 loose ends | absorb slippage |
-| **June 8-12 (Wk 34)** | Final week; **June 12 last day** | Review & final assessments | Review & finals |
+| **June 1-5 (Wk 33)** | **Catch-up / flex week** (designated; the last flex) | retakes, reflection, absorb slippage | retakes, reflection, absorb slippage |
+| **June 8-12 (Wk 34)** | Final week; **June 12 last day** | retakes + closeout (no new grading load) | retakes + closeout |
 
 ## Unit progression side-by-side
 
@@ -60,9 +60,11 @@ Unit 6 ran out of time last year. The back end is now hard-fenced; treat these a
 
 Consequence: ~31 usable content weeks, not 34. To keep U6 whole, the lost time must come from an earlier unit, not from U6. Gen Ed U6 (Midsummer) is the tightest squeeze; if U5 Animal Farm runs to its old Wk 29 end, U6 collapses to two weeks. Either end U5 by Wk 28 or trim a longer earlier unit (Chew On This at 8 weeks, or Chains) to buy U6 a real three-week run.
 
-**Open decision — where do final assessments go?** Two options, because grading must be clean before the trip:
-- **A. Summative by May 22, June for closeout.** Give the U6 / end-of-year summative in Wk 31, grade it before the trip; Wks 33-34 become SBG retakes, reflection, and wrap-up (retakes just raise the existing score, near-zero new grading). Fits "all grading done before the trip" literally.
-- **B. Keep finals in Wk 34 (June 8-12).** Only the final is graded after the trip; everything else is clean by May 22. Lighter restructure, but you grade finals in the last week with students back.
+**Final assessments: Option A (decided).** Give the U6 / end-of-year summative in **Wk 31 (May 18-22)** and grade it before the trip. **Wks 33-34 (June 1-12) are a retake + reflection + closeout window**, not new finals: under the highest-score rule, retakes just raise an existing score, so grading load in June is near-zero. This keeps all grading clean before the trip and makes the calendar match the SBG model (multiple opportunities, highest attempt).
+
+Watch: if state testing or an earlier unit runs long, the Wk 31 summative gets squeezed. Covered by the upstream-compression guardrail (end U5 by Wk 28, or trim Chew On This / Chains) and the June 1-5 flex week as buffer.
+
+*Alternative considered (B, rejected): keep a cumulative final in Wk 34 and grade it June 8-12. Rejected because it grades the highest-stakes assessment in the final five days against the June 12 submission deadline, right after the trip; that is the crunch that let Unit 6 slip last year.*
 
 ## Seams to watch
 
