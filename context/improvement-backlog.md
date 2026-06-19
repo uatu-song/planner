@@ -38,7 +38,7 @@ Tracking that accommodations (IEP / 504 / MI-Access) were actually provided per 
 ## Repo / tooling improvements
 
 - **Two overlapping gradebook tools, no canonical one.** "Complete Processor" vs. "Ultimate Processor" are two iterations of one job. Pick the survivor, archive the other.
-- **Dangling references to external systems.** Gradebook Hub (Sheet+GAS), SongVue, and Agenda have placeholder tokens but no code here. Document them as external, or build them in.
+- **External systems referenced by token.** The Gradebook Hub is a real existing Google Sheet (apps for sorting highest-earned skill grade plus related data); SongVue and Agenda also have placeholder tokens. These are external by design and their code/tabs are not in the repo. The SBG app extends the Gradebook Hub (see `../infrastructure/SBG_build_plan.md`); document SongVue/Agenda scope when relevant.
 - **Manual year-start stamping.** Placeholder replacement is a hand-hunt across files. **Direction:** see Opportunity 5.
 - **No CLAUDE.md.** Conventions (SBG rules, no em dashes, bubble gotchas, Apps Script rules) are scattered across README and context; a CLAUDE.md would auto-load them each session.
 
@@ -56,4 +56,5 @@ Tracking that accommodations (IEP / 504 / MI-Access) were actually provided per 
 These need source material from the teacher before a system can be designed. Drop files in `private/` (gitignored).
 
 - [ ] **Upload a sample accommodation log** (de-identified) so we can see the real fields, cadence, and audit expectations, then plan a system to address accommodation tracking expediently. Relates to choke point 6 and `../templates/_TEMPLATE_student_accommodations.md`. Note: real logs are PII; `*_accommodations.md` and `private/` are already gitignored, but redact the sample anyway.
+- [ ] **Export the Gradebook Hub's current tabs and Apps Script** (the highest-skill-grade sorting apps plus related data structure) so the SBG build extends and consolidates them instead of duplicating. The code can be committed (no PII); keep any data export in `private/`.
 - [ ] **Scan and upload the individual month event calendars** for the school year. `year-timeline.md` is built from the planning-guide's date list; per-month calendars give a more granular, authoritative picture (early releases, half-days, PD days, assemblies, testing sub-windows) that the high-level calendar misses. Once uploaded, reconcile `year-timeline.md` against them.

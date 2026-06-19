@@ -14,7 +14,7 @@ The repo holds **code and templates only**. The Sheet and its data never get com
 
 ## Guardrails carried from repo conventions (resolve these in the build)
 
-1. **Mastery = highest attempt, not a blend.** The schema's `calculateMastery()` (section 3A) computes a weighted average of the top 3 attempts (0.5/0.3/0.2). That is a blend, and it contradicts the repo convention ("record highest/best attempt, not average") and the SBG philosophy throughout the planning guide. **Build the pure-highest rule:** mastery for a standard = max proficiency achieved (most recent attempt breaks ties), stored as `highest_proficiency`. Drop the weighted blend unless you explicitly want it.
+1. **Mastery = highest attempt, not a blend.** The schema's `calculateMastery()` (section 3A) computes a weighted average of the top 3 attempts (0.5/0.3/0.2). That is a blend, and it contradicts the repo convention ("record highest/best attempt, not average") and the SBG philosophy throughout the planning guide. **Build the pure-highest rule:** mastery for a standard = max proficiency achieved (most recent attempt breaks ties), stored as `highest_proficiency`. Drop the weighted blend unless you explicitly want it. The Gradebook Hub already sorts by highest earned skill grade, so pure-highest is already your working practice; reuse that logic, do not rebuild it.
 2. **MI-Access students excluded from proficiency denominators.** The schema `students` table has no MI-Access flag. **Add `mi_access` (boolean)**; exclude those students from all class/MT proficiency aggregates while still tracking their individual evidence.
 3. **Behavior separated from academic measurement.** Keep behavior out of the `grades`/proficiency tables entirely; if behavior notes are needed, a separate tab, never folded into proficiency.
 4. **No em dashes in generated parent/student text** (commas/semicolons); parent-facing warm/professional. Applies to the parent-report generator.
@@ -59,11 +59,11 @@ The schema's seed blocks are a strong start but need reconciliation against curr
 
 ## Secrets & PII handling
 
-- New Sheet ID and GAS deploy ID go in `private/deployment-ids.md` (gitignored). Reserve tokens `{{SBG_SHEET_ID}}` and `{{SBG_GAS_DEPLOY_ID}}`, or reuse the existing `{{GRADEBOOK_*}}` tokens if this app *is* the "Gradebook Hub" referenced in `PSAT_Adaptive_Handoff.md` (open decision below).
+- Reuse the existing `{{GRADEBOOK_SHEET_ID}}` / `{{GRADEBOOK_GAS_DEPLOY_ID}}` tokens; they point at the Gradebook Hub this app extends. Values live in `private/deployment-ids.md` (gitignored).
 - Never commit a roster or grade export. Verify with `git status` before any push.
 
 ## Open decisions
 
-1. **Is this app the "Gradebook Hub"?** The PSAT handoff references a Gradebook Hub (Sheet+GAS) and the README reserves `{{GRADEBOOK_SHEET_ID}}`/`{{GRADEBOOK_GAS_DEPLOY_ID}}`. If the SBG app *is* that hub, reuse those tokens and retire one of the two gradebook HTMLs into its import path. If separate, use new `{{SBG_*}}` tokens.
+1. **Relationship to the Gradebook Hub — resolved.** The Gradebook Hub is an existing Google spreadsheet that already holds your apps for sorting highest-earned skill grade plus related data, referenced by `{{GRADEBOOK_SHEET_ID}}`/`{{GRADEBOOK_GAS_DEPLOY_ID}}`. The SBG app is not a new silo: build it into (or directly linked to) the Hub and reuse the existing highest-skill-grade logic. **Remaining sub-decision:** extend the Hub workbook in place (add tabs plus bound script) vs. a separate workbook that reads it. To choose, I need to see the Hub's current tabs and Apps Script (see the Future input in `../context/improvement-backlog.md`).
 2. **Keep pure-highest, or allow the schema's weighted-recent blend as an option?** Default in this plan is pure-highest per convention.
 3. **Confirm NHA conversion cut scores** before building the export.
